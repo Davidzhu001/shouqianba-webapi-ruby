@@ -28,9 +28,7 @@ module Shouqianba
         sdk_version: options[:sdk_version]
         })
 
-      self.post_method "/terminal/activate", vendor_sn, vendor_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/terminal/activate", vendor_sn, vendor_key, {}, params
     end
 
     def self.checkin(terminal_sn, terminal_key, device_id, options={})
@@ -41,9 +39,7 @@ module Shouqianba
           os_info: options[:os_info],
           sdk_version: options[:sdk_version]
         })
-      self.post_method "/terminal/checkin", terminal_sn, terminal_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/terminal/checkin", terminal_sn, terminal_key, {}, params
     end
 
     def self.pay(terminal_sn, terminal_key, client_sn, total_amount, dynamic_id, subject, operator, options={})
@@ -64,9 +60,7 @@ module Shouqianba
           reflect: options[:reflect],
           notify_url: options[:notify_url]
         })
-      self.post_method "/upay/v2/pay", terminal_sn, terminal_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/upay/v2/pay", terminal_sn, terminal_key, {}, params
     end
 
 
@@ -88,9 +82,7 @@ module Shouqianba
           reflect: options[:reflect],
           notify_url: options[:notify_url]
         })
-      self.post_method "/upay/v2/precreate", terminal_sn, terminal_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/upay/v2/precreate", terminal_sn, terminal_key, {}, params
     end
 
     def self.refund(terminal_sn, terminal_key, refund_request_no, operator, refund_amount, options={})
@@ -105,9 +97,7 @@ module Shouqianba
           client_tsn: options[:client_tsn],
 
         })
-      self.post_method "/upay/v2/refund", terminal_sn, terminal_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/upay/v2/refund", terminal_sn, terminal_key, {}, params
     end
 
     def self.cancel(terminal_sn, terminal_key, options={})
@@ -117,9 +107,7 @@ module Shouqianba
           sn: options[:sn],
           client_sn: options[:client_sn]
         })
-      self.post_method "/upay/v2/cancel", terminal_sn, terminal_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/upay/v2/cancel", terminal_sn, terminal_key, {}, params
     end
 
     def self.query(terminal_sn, terminal_key, options={})
@@ -129,9 +117,7 @@ module Shouqianba
         sn: options[:sn],
         client_sn: options[:client_sn]
       })
-      self.post_method "/upay/v2/query", terminal_sn, terminal_key, {}, params do |resp|
-        yield(resp)
-      end
+      self.post_method "/upay/v2/query", terminal_sn, terminal_key, {}, params
     end
 
     def self.wap2_url(terminal_sn, terminal_key, client_sn, total_amount, subject, operator, return_url, options={})
@@ -152,7 +138,21 @@ module Shouqianba
         notify_url: options[:notify_url]
         })
       params[:sign] = get_wrap2_sign(params, terminal_key)
-      "https://m.wosai.cn/qr/gateway?#{params.to_query}"
+      "https://m.wosai.cn/qr/?#{params.to_query}"
+    end
+
+    def self.wap_pro_url(terminal_sn, terminal_key, client_sn, total_amount, subject, operator, return_url, notify_url)
+      params = {
+        terminal_sn: terminal_sn,
+        client_sn: client_sn,
+        total_amount: total_amount,
+        subject: subject,
+        operator: operator,
+        return_url: return_url,
+        notify_url: notify_url
+        }
+      params[:sign] = Digest::MD5.hexdigest("#{params.to_query}&key=#{terminal_key}".gsub('%3A', ':').gsub('%2F', '/')).upcase
+      "https://qr.shouqianba.com/gateway?#{params.to_query}"
     end
 
     def self.get_wrap2_sign(params, terminal_key)
@@ -177,7 +177,7 @@ module Shouqianba
       response = https.request(req)
       data = ActiveSupport::JSON.decode(response.body).to_options
       check_errcode(data)
-      yield(data[:biz_response])
+      data[:biz_response]
     end
 
     def self.check_errcode(data)
